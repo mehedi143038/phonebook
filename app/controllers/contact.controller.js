@@ -40,7 +40,7 @@ exports.create = (req, res) => {
 
 // Get contact details by a mobile number
 exports.findOne = (req, res) => {
-    Contact.findById(req.params.contactNumber)
+    Contact.findOne({number: req.params.contactNumber})
     .then(contact => {
         if(!contact) {
             return res.status(404).send({
@@ -84,7 +84,7 @@ exports.update = (req, res) => {
     }
 
     //Find out the contact and update it with the request body
-    Contact.findByIdAndUpdate(req.params.contactNumber, {
+    Contact.findOneAndUpdate(req.params.contactNumber, {
         name: req.body.name,
         number: req.body.number
     }, {new: true})
@@ -93,8 +93,17 @@ exports.update = (req, res) => {
             return res.status(404).send({
                 message: "Contact not found with number " + req.params.contactNumber
             });
+        }else{
+            let validNumber = contact.number;
+            let re = /^(?:\+88|01)?(?:\d{11}|\d{13})$/;
+            if(!(re.test(validNumber))) {
+                return res.status(400).send({
+                    message: "Phone number is not valid, give a valid Bangladeshi phone number."
+                })
+            }
+            res.send(contact);
         }
-        res.send(contact);
+        //res.send(contact);
     }).catch(err => {
         if(err.kind === 'ObjectId') {
             return res.status(404).send({
@@ -110,7 +119,7 @@ exports.update = (req, res) => {
 
 //Delete a given number
 exports.delete = (req, res) => {
-    Contact.findByIdAndRemove(req.params.contactNumber)
+    Contact.findOneAndRemove({number: req.body.number})
     .then(contact => {
         if(!contact) {
             return res.status(404).send({
